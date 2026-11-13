@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#111318" />
+  <title>TM Трекер</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #111318;
+      --card: #1b1f28;
+      --card-hover: #252b38;
+      --border: #2c3342;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --points: #4ade80;
+      --mentality: #c084fc;
+      --ideas: #fbbf24;
+      --accent: #3b82f6;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .app { max-width: 480px; margin: 0 auto; padding-bottom: 40px; }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 8px;
+    }
+    .title { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+    .btn-pill {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-icon {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 12px;
+      width: 40px;
+      height: 40px;
+      font-size: 18px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .themes-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .theme-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 8px;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.08s ease, background 0.15s ease;
+    }
+    .theme-card:active { transform: scale(0.96); background: var(--card-hover); }
+    .theme-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--muted);
+      margin: 0 0 10px 0;
+    }
+    .top-list { display: flex; flex-direction: column; gap: 8px; }
+    .top-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      text-align: left;
+      color: var(--text);
+      width: 100%;
+      transition: transform 0.08s ease, background 0.15s ease;
+    }
+    .top-item:active { transform: scale(0.98); background: var(--card-hover); }
+    .top-left { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+    .top-rank { color: var(--muted); font-size: 13px; width: 20px; flex-shrink: 0; }
+    .top-text { font-size: 15px; font-weight: 500; word-break: break-word; }
+    .top-tag { font-size: 12px; color: var(--muted); margin-right: 4px; }
+    .top-count { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+    .empty-box {
+      background: var(--card);
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .btn-primary {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 15px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 18px;
+    }
+    .btn-primary:active { opacity: 0.9; transform: scale(0.99); }
+    textarea, input[type="text"], input[type="password"] {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      color: var(--text);
+      font-size: 16px;
+      outline: none;
+      font-family: inherit;
+    }
+    textarea:focus, input:focus { border-color: var(--accent); }
+    .idea-row {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+    }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%);
+      background: #16a34a;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      max-width: 90vw;
+      text-align: center;
+    }
+    .toast.show { opacity: 1; }
+    .toast.err { background: var(--danger); }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #161922;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .modal h3 { margin: 0 0 12px 0; font-size: 18px; }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn-ok {
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app"></div>
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-backdrop" id="manualModal">
+    <div class="modal">
+      <h3 id="manualTitle">Новая запись</h3>
+      <input type="text" id="manualInput" placeholder="Например: 1 англ" />
+      <div class="modal-actions">
+        <button class="btn-ghost" onclick="closeManualModal()">Отмена</button>
+        <button class="btn-ok" onclick="submitManual()">Записать</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal">
+      <h3>Настройки таблицы</h3>
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Google Apps Script URL</label>
+      <input type="text" id="cfgUrl" style="margin-bottom:12px;" />
+      <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px;">Секретный ключ (если задан)</label>
+      <input type="password" id="cfgSecret" />
+      <div class="modal-actions">
+        <button class="btn-ghost" onclick="closeSettings()">Отмена</button>
+        <button class="btn-ok" onclick="saveSettings()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_URL = "https://script.google.com/macros/s/AKfycbxqYpv_D1mlFtBZz-RP9bGwbzuGSbgQfocOvwo0Ac6nVxWi0bOW0vOInGAIcx6n-ADnmQ/exec";
+    const KEYS = {
+      templates: "tm_templates_v1",
+      queue: "tm_queue_v1",
+      ideasHistory: "tm_ideas_history_v1",
+      url: "tm_webhook_url_v1",
+      secret: "tm_webhook_secret_v1"
+    };
+    const THEMES = {
+      points: { title: "Баллы", color: "var(--points)", hint: "Например: 1 англ" },
+      mentality: { title: "Менталка", color: "var(--mentality)", hint: "Например: -1 д" },
+      ideas: { title: "Идеи", color: "var(--ideas)", hint: "Запишите мысль..." }
+    };
+
+    let state = { screen: "home", syncing: false, manualType: "points" };
+
+    function loadJSON(key, fallback) {
+      try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+    }
+    function saveJSON(key, val) {
+      localStorage.setItem(key, JSON.stringify(val));
+    }
+    function getConfig() {
+      return {
+        url: (localStorage.getItem(KEYS.url) || DEFAULT_URL).trim(),
+        secret: (localStorage.getItem(KEYS.secret) || "").trim()
+      };
+    }
+
+    function pad(n) { return String(n).padStart(2, "0"); }
+    function makeId() {
+      return (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "-" + Math.random().toString(16).slice(2));
+    }
+
+    function showToast(msg, isError = false) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.className = "toast show" + (isError ? " err" : "");
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => { el.className = "toast"; }, 2200);
+    }
+
+    function addRecord(type, rawText) {
+      const text = rawText.trim();
+      if (!text) return;
+      if (navigator.vibrate) navigator.vibrate(25);
+
+      const now = new Date();
+      const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+      const time = `${pad(now.getHours())}-${pad(now.getMinutes())}`;
+      const created_at = now.toISOString();
+
+      const item = { id: makeId(), type, date, time, text, created_at };
+      const queue = loadJSON(KEYS.queue, []);
+      queue.push(item);
+      saveJSON(KEYS.queue, queue);
+
+      if (type === "points" || type === "mentality") {
+        const templates = loadJSON(KEYS.templates, []);
+        const existing = templates.find((t) => t.type === type && t.text === text);
+        if (existing) {
+          existing.usage_count += 1;
+          existing.last_used_at = created_at;
+        } else {
+          templates.push({ type, text, usage_count: 1, last_used_at: created_at });
+        }
+        saveJSON(KEYS.templates, templates);
+      } else if (type === "ideas") {
+        const hist = loadJSON(KEYS.ideasHistory, []);
+        hist.unshift({ id: item.id, time, text, synced: false });
+        saveJSON(KEYS.ideasHistory, hist.slice(0, 20));
+      }
+
+      showToast(`✓ ${text} (${time})`);
+      render();
+      syncQueue(false);
+    }
+
+    async function syncQueue(showFeedback = false) {
+      if (state.syncing) return;
+      const queue = loadJSON(KEYS.queue, []);
+      if (queue.length === 0) {
+        if (showFeedback) showToast("Все записи синхронизированы");
+        return;
+      }
+      const { url, secret } = getConfig();
+      if (!url) {
+        if (showFeedback) showToast("Не задан URL таблицы", true);
+        return;
+      }
+
+      state.syncing = true;
+      render();
+      try {
+        const resp = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ secret, events: queue })
+        });
+        const data = await resp.json();
+        if (data && data.status === "ok") {
+          const sentIds = new Set(queue.map((q) => q.id));
+          const currentQueue = loadJSON(KEYS.queue, []).filter((q) => !sentIds.has(q.id));
+          saveJSON(KEYS.queue, currentQueue);
+
+          const hist = loadJSON(KEYS.ideasHistory, []).map((h) =>
+            sentIds.has(h.id) ? { ...h, synced: true } : h
+          );
+          saveJSON(KEYS.ideasHistory, hist);
+
+          if (showFeedback) showToast(`Отправлено: ${queue.length}`);
+        } else {
+          if (showFeedback) showToast(data?.message || "Ошибка таблицы", true);
+        }
+      } catch (err) {
+        if (showFeedback) showToast("Нет сети — сохранено в очередь", true);
+      } finally {
+        state.syncing = false;
+        render();
+      }
+    }
+
+    function getTop(filterType = null) {
+      const templates = loadJSON(KEYS.templates, []);
+      return templates
+        .filter((t) => (filterType ? t.type === filterType : t.type === "points" || t.type === "mentality"))
+        .sort((a, b) => (b.usage_count - a.usage_count) || b.last_used_at.localeCompare(a.last_used_at))
+        .slice(0, 10);
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+    }
+
+    function renderTopList(filterType = null) {
+      const list = getTop(filterType);
+      if (list.length === 0) {
+        return `<div class="empty-box">Пока пусто — сделайте первую ручную запись, и здесь появится Топ-10.</div>`;
+      }
+      return `<div class="top-list">` + list.map((item, i) => {
+        const meta = THEMES[item.type];
+        const tag = filterType ? "" : `<span class="top-tag">[${meta.title}]</span>`;
+        return `
+          <button class="top-item" onclick='addRecord(${JSON.stringify(item.type)}, ${JSON.stringify(item.text)})'>
+            <div class="top-left">
+              <span class="top-rank">${i + 1}.</span>
+              <span class="theme-dot" style="background:${meta.color};flex-shrink:0;"></span>
+              <span class="top-text">${tag}${escapeHtml(item.text)}</span>
+            </div>
+            <span class="top-count">×${item.usage_count}</span>
+          </button>
+        `;
+      }).join("") + `</div>`;
+    }
+
+    function render() {
+      const app = document.getElementById("app");
+      const pending = loadJSON(KEYS.queue, []).length;
+      const syncText = state.syncing ? "Синхр..." : (pending > 0 ? `Очередь: ${pending}` : "Синхр. ОК");
+      const syncDotColor = pending > 0 ? "var(--ideas)" : "var(--points)";
+
+      if (state.screen === "home") {
+        app.innerHTML = `
+          <div class="header">
+            <div class="title">TM Трекер</div>
+            <div class="header-actions">
+              <button class="btn-pill" onclick="syncQueue(true)">
+                <span class="theme-dot" style="background:${syncDotColor};width:8px;height:8px;"></span>
+                ${syncText}
+              </button>
+              <button class="btn-icon" onclick="openSettings()" title="Настройки">⚙</button>
+            </div>
+          </div>
+
+          <div class="themes-grid">
+            <button class="theme-card" onclick="navigate('points')">
+              <span class="theme-dot" style="background:var(--points)"></span>
+              <span>Баллы</span>
+            </button>
+            <button class="theme-card" onclick="navigate('mentality')">
+              <span class="theme-dot" style="background:var(--mentality)"></span>
+              <span>Менталка</span>
+            </button>
+            <button class="theme-card" onclick="navigate('ideas')">
+              <span class="theme-dot" style="background:var(--ideas)"></span>
+              <span>Идеи</span>
+            </button>
+          </div>
+
+          <p class="section-title">Топ-10 частых записей (1 нажатие)</p>
+          ${renderTopList(null)}
+        `;
+        return;
+      }
+
+      const meta = THEMES[state.screen];
+      if (state.screen === "ideas") {
+        const hist = loadJSON(KEYS.ideasHistory, []);
+        const histHtml = hist.length
+          ? hist.map((h) => `
+              <div class="idea-row">
+                <div><span style="color:var(--muted)">[${h.time}]</span> ${escapeHtml(h.text)}</div>
+                <span>${h.synced ? "✓" : "⏳"}</span>
+              </div>
+            `).join("")
+          : `<div class="empty-box">Пока нет записанных идей.</div>`;
+
+        app.innerHTML = `
+          <div class="header">
+            <div class="title">
+              <button class="btn-icon" onclick="navigate('home')">←</button>
+              <span class="theme-dot" style="background:${meta.color}"></span>
+              <span>${meta.title}</span>
+            </div>
+          </div>
+          <textarea id="ideaInput" rows="4" placeholder="${meta.hint}" style="margin-bottom:12px;"></textarea>
+          <button class="btn-primary" onclick="submitIdea()">Записать идею</button>
+          <p class="section-title">Недавние идеи</p>
+          <div class="top-list">${histHtml}</div>
+        `;
+        setTimeout(() => document.getElementById("ideaInput")?.focus(), 50);
+        return;
+      }
+
+      app.innerHTML = `
+        <div class="header">
+          <div class="title">
+            <button class="btn-icon" onclick="navigate('home')">←</button>
+            <span class="theme-dot" style="background:${meta.color}"></span>
+            <span>${meta.title}</span>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="openManualModal('${state.screen}')">+ Ручная запись</button>
+        <p class="section-title">Топ-10: ${meta.title}</p>
+        ${renderTopList(state.screen)}
+      `;
+    }
+
+    function navigate(screen) {
+      state.screen = screen;
+      render();
+    }
+
+    function openManualModal(type) {
+      state.manualType = type;
+      const meta = THEMES[type];
+      document.getElementById("manualTitle").textContent = `Запись: ${meta.title}`;
+      const input = document.getElementById("manualInput");
+      input.placeholder = meta.hint;
+      input.value = "";
+      document.getElementById("manualModal").classList.add("open");
+      setTimeout(() => input.focus(), 50);
+    }
+    function closeManualModal() {
+      document.getElementById("manualModal").classList.remove("open");
+    }
+    function submitManual() {
+      const val = document.getElementById("manualInput").value.trim();
+      if (!val) return;
+      closeManualModal();
+      addRecord(state.manualType, val);
+    }
+    function submitIdea() {
+      const el = document.getElementById("ideaInput");
+      const val = el.value.trim();
+      if (!val) return;
+      el.value = "";
+      addRecord("ideas", val);
+    }
+
+    function openSettings() {
+      const cfg = getConfig();
+      document.getElementById("cfgUrl").value = cfg.url;
+      document.getElementById("cfgSecret").value = cfg.secret;
+      document.getElementById("settingsModal").classList.add("open");
+    }
+    function closeSettings() {
+      document.getElementById("settingsModal").classList.remove("open");
+    }
+    function saveSettings() {
+      localStorage.setItem(KEYS.url, document.getElementById("cfgUrl").value.trim());
+      localStorage.setItem(KEYS.secret, document.getElementById("cfgSecret").value.trim());
+      closeSettings();
+      showToast("Настройки сохранены");
+      syncQueue(true);
+    }
+
+    document.getElementById("manualInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") submitManual();
+    });
+    window.addEventListener("online", () => syncQueue(false));
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
+
+    render();
+    syncQueue(false);
+  </script>
+</body>
+</html>
